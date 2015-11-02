@@ -1,5 +1,3 @@
-StoreysJS — Maintainable Web Applications
-
 Storeys is a client-side JavaScript framework for developing maintainable web applications.
 
 Storeys is web ready: supports webpages served entirely by web servers. It is highly scalable as most of its content can be served as static assets.
