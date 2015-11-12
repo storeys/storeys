@@ -1,0 +1,4 @@
+[submodule "submodules/requirejs"]
+	path = submodules/requirejs
+	url = https://github.com/jrburke/requirejs.git
+	branch = master
