@@ -1,6 +1,6 @@
 define(
-  ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
-  function(require, module, settings, handlers, binds, urllib, pathlib) {
+  ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib'],
+  function(require, module, settings, handlers, binds, urllib) {
     var LOG_PREFIX = '[storeys] ';
 
     var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
@@ -9,21 +9,6 @@ define(
     // -------------------------------------------
     //                 Utilities
     // -------------------------------------------
-    function extend(a, b) {
-      Object.keys(b).some(function(key) {
-        a[key] = b[key];
-      });
-      return a;
-    }
-
-    function clone(b) {
-      var a = {};
-      Object.keys(b).some(function(key) {
-        a[key] = b[key];
-      });
-      return a;
-    }
-
     function process_document_url(urlstring, context) {
       var base    = require.toUrl(''),
           baseurl = urllib.parse(base),
