@@ -1,10 +1,11 @@
 define(
-    ['require', 'module', 'underscore', '../conf/urls'],
-    function(require, module, _, urls) {
+    ['require', 'module', '../conf/urls'],
+    function(require, module, urls) {
       var LOG_PREFIX = '[storeys.core.urls] ',
           EMPTY_REG = /(?:)/;
 
       var verbose;
+
 
       function visit(urlpath, node, params, cb) {
         var resolved = node.regex.match(urlpath);
@@ -32,7 +33,7 @@ define(
                 return {
                   urlpath: resolved.remainder,
                   node: url,
-                  params: _.extend(params, resolved.params)
+                  params: extend(params, resolved.params)
                 };
               }), cb);
             });
@@ -60,6 +61,16 @@ define(
             cb(params, view);
           }
         });
+      }
+
+      // -------------------------------------------
+      //                 Utilities
+      // -------------------------------------------
+      function extend(a, b) {
+        Object.keys(b).some(function(key) {
+          a[key] = b[key];
+        });
+        return a;
       }
 
       // ===========================================
