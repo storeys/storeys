@@ -1,6 +1,6 @@
 define(
-  ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib'],
-  function(require, module, settings, handlers, binds, urllib) {
+  ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
+  function(require, module, settings, handlers, binds, urllib, pathlib) {
     var LOG_PREFIX = '[storeys] ';
 
     var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
@@ -12,10 +12,10 @@ define(
     function process_document_url(urlstring, context) {
       var base    = require.toUrl(''),
           baseurl = urllib.parse(base),
-          path    = urlstring.indexOf('/') === 0? base + urlstring.substring(1): urlstring;
+          path    = urlstring.indexOf('/') === 0? base + urlstring.substring(1): urlstring,
           url     = urllib.parse(path);
 
-      context.path = urllib.relative(baseurl.path, url.path);
+      context.path = pathlib.relative(baseurl.path, url.path);
       context.GET  = url.params;
       return context;
     }
@@ -23,10 +23,10 @@ define(
     function process_app_url(urlstring, context) {
       var base    = require.toUrl(''),
           baseurl = urllib.parse(base),
-          path    = urlstring.indexOf('/') === 0? urlstring.substring(1): urlstring;
+          path    = urlstring.indexOf('/') === 0? urlstring.substring(1): urlstring,
           url     = urllib.parse(base + path);
 
-      context.path = urllib.relative(baseurl.path, url.path);
+      context.path = pathlib.relative(baseurl.path, url.path);
       context.GET  = url.params;
       return context;
     }
