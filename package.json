@@ -2,7 +2,7 @@
   "name": "storeys",
   "version": "0.0.3",
   "description": "StoreysJS — Maintainable Web Applications",
-  "main": "js/index.js",
+  "main": "storeys/js/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
