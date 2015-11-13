@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta charset="utf-8">
+
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+    <link href="./css/storeys.css" rel="stylesheet" >
+
+    <script type="text/javascript">
+      var require = {
+        baseUrl: '../',
+        config: {
+          settings: {
+            // settings for storeys app
+          },
+          'storeys/index': {
+            verbose: true
+          },
+          'storeys/template/loader': {
+            verbose: true
+          },
+          'storeys/core/urlresolver': {
+            verbose: true
+          },
+          'storeys/core/handlers/base': {
+            verbose: true
+          }
+        },
+        packages: [
+          {
+            name: 'storeys',
+            location: 'storeys/js',
+            main: 'index'
+          }
+        ]
+      }
+    </script>
+    <script data-main="main" src="../storeys/lib/require.js"
+            type="text/javascript" charset="utf-8">
+    </script>
+  </head>
+  <body class="storeys">
+  </body>
+</html>
