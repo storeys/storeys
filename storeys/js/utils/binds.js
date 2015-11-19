@@ -26,7 +26,7 @@ define(
         };
 
         binder.trigger = function (type, params, summary) {
-          var j, count = 0,
+          var j, count = 0, len,
               args = [{type: type}],
               filter = typeof(type) === "string" ? {type: type} : type,
               matches = find(handlers, filter),
