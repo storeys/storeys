@@ -1,7 +1,8 @@
 define(
   ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
   function(require, module, settings, handlers, binds, urllib, pathlib) {
-    var LOG_PREFIX = '[storeys] ';
+    var LOG_PREFIX = '[storeys] ',
+        RE_URL = /w+:\/\//;
 
     var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
         verbose;
@@ -10,23 +11,34 @@ define(
     //                 Utilities
     // -------------------------------------------
     function process_document_url(urlstring, context) {
-      var base    = require.toUrl(''),
-          baseurl = urllib.parse(base),
-          path    = urlstring.indexOf('/') === 0? base + urlstring.substring(1): urlstring,
-          url     = urllib.parse(path);
+      var state   = window.history.state,
+          docpath = state.path.charAt(0) === '/'? state.path.substring(1): state.path,
+          docurl  = urllib.parse(settings.URL_ROOT + '/' + docpath),
+          path, url;
 
-      context.path = pathlib.relative(baseurl.path, url.path);
+      if (urlstring.length === 0) {
+        path = docurl.path;
+      } else if (urlstring.charAt(0) === '#') {
+        path = docurl.path + urlstring;
+      } else if (urlstring.indexOf('//') === 0) {
+        path = urlstring;
+      } else if (urlstring.charAt(0) === '/') {
+        path = settings.URL_ROOT + urlstring;
+      } else {
+        path = urlstring;
+      }
+      url = urllib.parse(path);
+      context.path = url.path;
       context.GET  = url.params;
+      context.hash = url.hash;
       return context;
     }
 
     function process_app_url(urlstring, context) {
-      var base    = require.toUrl(''),
-          baseurl = urllib.parse(base),
-          path    = urlstring.indexOf('/') === 0? urlstring.substring(1): urlstring,
-          url     = urllib.parse(base + path);
+      var path = urlstring.charAt(0) === '/'? urlstring.substring(1): urlstring,
+          url = urllib.parse(settings.URL_ROOT + '/' + path);
 
-      context.path = pathlib.relative(baseurl.path, url.path);
+      context.path = url.path;
       context.GET  = url.params;
       return context;
     }
@@ -39,19 +51,28 @@ define(
 
       var context;
       if (event.state) {
-        console.error('Not Implemented');
+        context = process_app_url(event.state.path, {
+          method: 'GET'
+        });
+        go(context, function(context) {
+          window.document.body.classList.remove('storeys');
+        });
       } else {
         context = process_app_url(settings.DEFAULT_URL || '', {
           method: 'GET'
         });
-        go(context);
+        go(context, function(context) {
+          window.history.replaceState({
+            path: context.path
+          });
+          window.document.body.classList.remove('storeys');
+        });
       }
     }
 
-    function go(context) {
+    function go(context, cb) {
       verbose && console.log(LOG_PREFIX + 'go to path(' + context.path + ')');
 
-      window.document.body.classList.add('storeys');
       handlers.get_response(context, function(response) {
         var forward;
 
@@ -60,32 +81,36 @@ define(
             verbose && console.log(LOG_PREFIX + 'dispatch: '+ context.path);
             if (response.status === 204) {
               verbose && console.log(LOG_PREFIX + 'HTTP 204 - No Content (or rendered): '+ context.path);
+              cb(context);
             } else if (response.status === 200) {
               verbose && console.log(LOG_PREFIX + 'HTTP 200 - Okay: '+ context.path);
               window.document.body.innerHTML = response.content;
+              cb(context);
             } else if (response.status === 301 || response.status === 302) {
               forward = process_app_url(response.location, {
                 method: 'GET'
               });
-              go(forward);
+              go(forward, cb);
             } else if (response.status === 307) {
               forward = process_app_url(response.location, {
                 method: reponse.method,
                 POST: context.POST || []
               });
-              go(forward);
+              go(forward, cb);
             } else if (response.status >= 500) {
               console.error(LOG_PREFIX + 'request \'' + context.path + '\' result in error: ' + response.status + '.');
               console.error(response.message);
+              cb(context);
             }
           } else {
             // @TODO --
             console.error('No handlers for this response. ' + JSON.stringify(response));
+            // cb(context);
           }
         } else {
           console.error('Empty response for path: ' + context.path);
+          // cb(context);
         }
-        window.document.body.classList.remove('storeys');
       });
     }
 
@@ -100,7 +125,13 @@ define(
         e.preventDefault();
 
         req = process_document_url(path, {method: 'GET'});
-        go(req);
+        window.document.body.classList.add('storeys');
+        go(req, function(context) {
+          window.history.pushState({
+            path: context.path
+          });
+          window.document.body.classList.remove('storeys');
+        });
       }
     }
 
@@ -118,7 +149,13 @@ define(
           method: method || 'POST',
           POST: $form.serializeArray()
         });
-        go(req);
+        window.document.body.classList.add('storeys');
+        go(req, function(context) {
+          window.history.pushState({
+            path: context.path
+          });
+          window.document.body.classList.remove('storeys');
+        });
       }
 
       return false;
