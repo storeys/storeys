@@ -5,7 +5,8 @@ define(
 
       function login_required(f) {
         return function (req, params, res) {
-          var location;
+          var location,
+              args;
 
           if (!req.user) {
             location = (settings.URL_LOGIN + '?' +
@@ -26,7 +27,14 @@ define(
               'Cache-Control': 'no-cache'
             });
           } else {
-            return f.apply(f, arguments);
+            if (typeof f === 'string') {
+              args = Array.prototype.slice.apply(arguments);
+              require([f], function(fn) {
+                return fn.apply(fn, args);
+              });
+            } else {
+              return f.apply(f, arguments);
+            }
           }
         }
       }
