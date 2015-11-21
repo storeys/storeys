@@ -11,7 +11,7 @@ define(
             cutpos = 0,
             i, len, result;
 
-        for (i = 0, len = Math.min(from.length, to.length); i < len; i++) {
+        for (i = 0, len = cutpos = Math.min(from.length, to.length); i < len; i++) {
           if (from[i] !== to[i]) {
             cutpos = i;
             break;
