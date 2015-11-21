@@ -2,3 +2,7 @@
 	path = submodules/requirejs
 	url = https://github.com/jrburke/requirejs.git
 	branch = master
+[submodule "submodules/zousan"]
+	path = submodules/zousan
+	url = https://github.com/storeys/zousan.git
+	branch = master
