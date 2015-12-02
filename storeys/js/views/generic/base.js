@@ -36,10 +36,20 @@ define(
                       } else {
                         window.document.body.innerHTML = response.content;
                       }
-                      res({
-                        status: 204,
-                        content: response.content
-                      });
+                      if (config.loaded) {
+                        config.loaded(response.content, function() {
+                          res({
+                            status: 204,
+                            content: response.content
+                          });
+                        });
+                      } else {
+                        res({
+                          status: 204,
+                          content: response.content
+                        });
+                      }
+
                     } else {
                       res(response);
                     }
