@@ -108,6 +108,7 @@ define(
                 view(request, params, cb);
               } else {
                 verbose && console.log(LOG_PREFIX + 'found no match for url: ' + req.path);
+                window.location.href = req.path;
               }
             });
           }
