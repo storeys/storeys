@@ -2,7 +2,7 @@ define(
   ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
   function(require, module, settings, handlers, binds, urllib, pathlib) {
     var LOG_PREFIX = '[storeys] ',
-        RE_URL = /w+:\/\//;
+        QURL = urllib.join(urllib.parse(settings.URL_ROOT)); /* qualified root url */
 
     var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
         verbose;
@@ -23,7 +23,7 @@ define(
       } else if (urlstring.indexOf('//') === 0) {
         path = urlstring;
       } else if (urlstring.charAt(0) === '/') {
-        path = settings.URL_ROOT + urlstring;
+        path = QURL + urlstring;
       } else {
         path = urlstring;
       }
@@ -34,12 +34,18 @@ define(
       return context;
     }
 
+    /**
+     *
+     * @param urlstring, a relative url related to qualified `settings.ROOT_URL`
+     * @param context
+     * @returns {*}
+     */
     function process_app_url(urlstring, context) {
-      var path = urlstring.charAt(0) === '/'? urlstring.substring(1): urlstring,
-          url = urllib.parse(settings.URL_ROOT + '/' + path);
+      var url = urllib.parse(QURL + urlstring);
 
       context.path = url.path;
       context.GET  = url.params;
+      context.hash = url.hash;
       return context;
     }
 
@@ -58,13 +64,13 @@ define(
           window.document.body.classList.remove('storeys');
         });
       } else {
-        context = process_app_url(settings.DEFAULT_URL || '', {
+        context = process_app_url(settings.DEFAULT_URL, {
           method: 'GET'
         });
         go(context, function(context) {
           window.history.replaceState({
             path: context.path
-          });
+          }, '', context.path);
           window.document.body.classList.remove('storeys');
         });
       }
@@ -126,10 +132,11 @@ define(
 
         req = process_document_url(path, {method: 'GET'});
         window.document.body.classList.add('storeys');
+
         go(req, function(context) {
           window.history.pushState({
             path: context.path
-          });
+          }, '', context.path);
           window.document.body.classList.remove('storeys');
         });
       }
@@ -153,7 +160,7 @@ define(
         go(req, function(context) {
           window.history.pushState({
             path: context.path
-          });
+          }, '', context.path);
           window.document.body.classList.remove('storeys');
         });
       }

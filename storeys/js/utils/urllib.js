@@ -81,7 +81,7 @@ define(
           url += ':' + parts.port;
         }
 
-        if (parts.path) {
+        if (parts.path && parts.path !== '/') {
           url += parts.path;
         }
 
