@@ -105,7 +105,11 @@ define(
             resolve(path, function(params, view) {
               if (params !== false) {
                 request = extend({}, req);
-                view(request, params, cb);
+                if ('dispatch' in view) {
+                  view.dispatch(request, params).then(cb);
+                } else {
+                  view(request, params, cb);
+                }
               } else {
                 verbose && console.log(LOG_PREFIX + 'found no match for url: ' + req.path);
                 window.location.href = req.path;

@@ -29,8 +29,14 @@ define(
           } else {
             if (typeof f === 'string') {
               args = Array.prototype.slice.apply(arguments);
-              require([f], function(fn) {
-                return fn.apply(fn, args);
+              require([f], function(view) {
+                if (typeof view === 'function') {
+                  return view.apply(view, args);
+                } else if ('dispatch' in view) {
+                  return view.dispatch.apply(view, args);
+                } else {
+                  console.error('Error. Expected view object type.');
+                }
               });
             } else {
               return f.apply(f, arguments);

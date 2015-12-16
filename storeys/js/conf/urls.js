@@ -39,10 +39,12 @@ define(
       var compiled = re.compile(regex),
           next;
 
-      if (typeof vieworurls == 'function') {
-        next = vieworurls;
+      if (!vieworurls) {
+        throw 'Undefined `vieworurls`.';
       } else if (typeof vieworurls == 'string') {
           next = vieworurls;
+      } else if (typeof vieworurls == 'function' || 'dispatch' in vieworurls) {
+        next = vieworurls;
       } else if (Array.isArray(vieworurls)) {
         next = vieworurls;
       } else if (vieworurls.conf == 'include') {

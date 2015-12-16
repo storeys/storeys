@@ -12,14 +12,14 @@ define(
 
         if (resolved) {
           verbose && console.log(LOG_PREFIX + 'visit(' + urlpath + ') resolved: ' + resolved + ' with regex: ' + node.regex);
-          if (typeof node.next === 'function') {
-            verbose && console.log(LOG_PREFIX + 'resolved: ' + node.next);
-            cb(resolved.params, node.next);
-          } else if (typeof node.next === 'string') {
+          if (typeof node.next === 'string') {
             verbose && console.log(LOG_PREFIX + 'resolved(lazily initiated): ' + node.next);
             require([node.next], function(fn) {
               cb(resolved.params, fn);
             });
+          } else if (typeof node.next === 'function' || 'dispatch' in node.next) {
+            verbose && console.log(LOG_PREFIX + 'resolved: ' + node.next);
+            cb(resolved.params, node.next);
           } else if (Array.isArray(node.next)) {
             verbose && console.log(LOG_PREFIX + 'array of config.urls: ' + JSON.stringify(node.next));
             loop(node.next.map(function(url) {

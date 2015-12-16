@@ -1,6 +1,6 @@
 define(
-    ['./loader'],
-    function(loader) {
+    ['./loader', 'storeys/utils/promise'],
+    function(loader, Q) {
       // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
@@ -11,26 +11,43 @@ define(
         return a;
       }
 
+      // -------------------------------------------
+      //                  Private
+      // -------------------------------------------
+      function render(templatepath, context, cb) {
+        var promise = new Q(),
+            template;
+
+        template = loader.get_template(templatepath);
+        template.render(context, function(err, dom) {
+          if (!err) {
+            promise.resolve({
+              status: 200,
+              content: dom
+            });
+          } else {
+            promise.resolve({
+              status: 500,
+              message: err
+            });
+          }
+        });
+
+        return promise;
+      }
+
+      function get_context(req, params) {
+        return extend({request: req}, params);
+      }
+
       // ===========================================
       //                   Public
       // ===========================================
       function TemplateResponse(templatepath) {
-        return function(req, params, res) {
-          var template = loader.get_template(templatepath);
+        return function(req, params) {
+          var context = get_context(req, params);
 
-          template.render(extend({request: req}, params), function(err, dom) {
-            if (!err) {
-              res({
-                status: 200,
-                content: dom
-              });
-            } else {
-              res({
-                status: 500,
-                message: err
-              });
-            }
-          });
+          return render(templatepath, context);
         };
       }
 

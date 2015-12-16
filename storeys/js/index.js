@@ -11,8 +11,8 @@ define(
     //                 Utilities
     // -------------------------------------------
     function process_document_url(urlstring, context) {
-      var state   = window.history.state,
-          docpath = state.path.charAt(0) === '/'? state.path.substring(1): state.path,
+      var state   = window.history.state || {},
+          docpath = state.path && state.path.charAt(0) === '/'? state.path.substring(1): state.path,
           docurl  = urllib.parse(settings.URL_ROOT + '/' + docpath),
           path, url;
 
@@ -124,13 +124,12 @@ define(
       var $el = $(e.target),
           $a = $el.closest('a'),
           hash = $a.prop('hash'),
-          path = $a.attr('href'),
-          req;
+          path = $a.attr('href') || '',
+          req = process_document_url(path, {method: 'GET'});
 
       if (path) {
         e.preventDefault();
 
-        req = process_document_url(path, {method: 'GET'});
         window.document.body.classList.add('storeys');
 
         go(req, function(context) {
