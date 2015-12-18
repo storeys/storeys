@@ -106,13 +106,18 @@ define(
               if (params !== false) {
                 request = extend({}, req);
                 if ('dispatch' in view) {
-                  view.dispatch(request, params).then(cb);
+                  view.dispatch(request, params).then(function(res) {
+                    res.view = view;
+                    cb(res);
+                  });
                 } else {
-                  view(request, params, cb);
+                  view(request, params, function(res) {
+                    res.view = view;
+                    cb(res);
+                  });
                 }
               } else {
-                verbose && console.log(LOG_PREFIX + 'found no match for url: ' + req.path);
-                window.location.href = req.path;
+                verbose && console.warn(LOG_PREFIX + 'found no match for url: ' + req.path);
               }
             });
           }

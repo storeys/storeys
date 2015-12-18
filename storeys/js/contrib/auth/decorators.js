@@ -3,7 +3,7 @@ define(
     function(require, module, settings) {
       var REDIRECT_FIELD_NAME = 'next';
 
-      function login_required(f) {
+      function login_required(v) {
         return function (req, params, res) {
           var location,
               args;
@@ -27,19 +27,27 @@ define(
               'Cache-Control': 'no-cache'
             });
           } else {
-            if (typeof f === 'string') {
+            if (typeof v === 'string') {
               args = Array.prototype.slice.apply(arguments);
-              require([f], function(view) {
+              require([v], function(view) {
                 if (typeof view === 'function') {
                   return view.apply(view, args);
                 } else if ('dispatch' in view) {
-                  return view.dispatch.apply(view, args);
+                  view.dispatch.apply(view, args)
+                      .then(res);
                 } else {
                   console.error('Error. Expected view object type.');
                 }
               });
             } else {
-              return f.apply(f, arguments);
+              if (typeof v === 'function') {
+                return v.apply(v, arguments);
+              } else if ('dispatch' in v) {
+                v.dispatch.apply(v, arguments)
+                    .then(res);
+              } else {
+                console.error('Error. Expected view object type.');
+              }
             }
           }
         }

@@ -37,16 +37,30 @@ define(
       };
       View.prototype.swap = function(res) {
         var dom,
-            config = this.config || {};
+            config = this.config || {},
+            $page;
 
-        if (res.status === 200) {
+        if (res.status >= 200 && res.status < 300) {
           if ('target' in config === false) {
             window.document.write(res.content);
             window.document.close();
           } else if (config.target) {
             if (config.target === 'body') {
-              // window.document.body.innerHTML += res.content;
-              $('body').append(res.content);
+              if (!config.strategy || config.strategy === 'append') {
+                if (config.page) {
+                  $page = $(config.page);
+                  if (!$page.length) {
+                    $('body').append(res.content);
+                  }
+                  $('.storeys > .current').removeClass('current');
+                  $(config.page).addClass('current');
+                } else {
+                  $('body').append(res.content);
+                }
+              } else if (config.strategy === 'replace') {
+                $('body').children().remove();
+                $('body').append(res.content);
+              }
             } else {
               dom = document.querySelector(config.target);
               if (dom) {

@@ -1,12 +1,12 @@
 
-.storeys {
+.storeys.loading {
   display: block;
   overflow: hidden;
   z-index: 0;
 }
 
 .storeys::before {
-  display: block;
+  display: none;
   position: absolute;
   content: '';
   width: 100%; height: 100%;
@@ -16,12 +16,13 @@
   overflow: hidden;
 }
 
-.storeys.unlocked::before {
-  background-color: rgba(0, 0, 0, 0.8);
+.storeys.loading::before {
+  display: block;
 }
 
 .storeys::after {
-  display: block; position: absolute;
+  display: none;
+  position: absolute;
   font-family: "Helvetica Neue Light", "Lucida Grande", "Calibri", "Arial", sans-serif;
   font-size: 14px;
   content: 'Loading...';
@@ -35,4 +36,17 @@
   opacity: 0.9;
   color: white;
   -webkit-user-drag: none;
+}
+
+.storeys.loading::after {
+  display: block;
+}
+
+.storeys > div, .storeys > form {
+  display: none;
+}
+
+.storeys > div.current,
+.storeys > div.transiting {
+  display: block;
 }

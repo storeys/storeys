@@ -2,7 +2,8 @@ define(
   ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
   function(require, module, settings, handlers, binds, urllib, pathlib) {
     var LOG_PREFIX = '[storeys] ',
-        QURL = urllib.join(urllib.parse(settings.URL_ROOT)); /* qualified root url */
+        QURL = urllib.join(urllib.parse(settings.URL_ROOT)), /* qualified root url */
+        UPDATE_URL = window.location.protocol !== 'file:';
 
     var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
         verbose;
@@ -11,17 +12,10 @@ define(
     //                 Utilities
     // -------------------------------------------
     function process_document_url(urlstring, context) {
-      var state   = window.history.state || {},
-          docpath = state.path && state.path.charAt(0) === '/'? state.path.substring(1): state.path,
-          docurl  = urllib.parse(settings.URL_ROOT + '/' + docpath),
-          path, url;
+      var path, url;
 
       if (urlstring.length === 0) {
-        path = docurl.path;
-      } else if (urlstring.charAt(0) === '#') {
-        path = docurl.path + urlstring;
-      } else if (urlstring.indexOf('//') === 0) {
-        path = urlstring;
+        path = '';
       } else if (urlstring.charAt(0) === '/') {
         path = QURL + urlstring;
       } else {
@@ -61,17 +55,23 @@ define(
           method: 'GET'
         });
         go(context, function(context) {
-          window.document.body.classList.remove('storeys');
+          window.document.body.classList.remove('loading');
         });
       } else {
         context = process_app_url(settings.DEFAULT_URL, {
           method: 'GET'
         });
         go(context, function(context) {
-          window.history.replaceState({
-            path: context.path
-          }, '', context.path);
-          window.document.body.classList.remove('storeys');
+          var url;
+
+          if (!window.history.state) {
+            url = UPDATE_URL? context.path: '#' + context.path;
+            window.history.replaceState({
+              view: context.view,
+              path: context.path
+            }, '', url);
+          }
+          window.document.body.classList.remove('loading');
         });
       }
     }
@@ -125,18 +125,24 @@ define(
           $a = $el.closest('a'),
           hash = $a.prop('hash'),
           path = $a.attr('href') || '',
-          req = process_document_url(path, {method: 'GET'});
+          req;
 
       if (path) {
         e.preventDefault();
 
-        window.document.body.classList.add('storeys');
+        window.document.body.classList.add('loading');
 
+        req = process_document_url(path, {method: 'GET'});
         go(req, function(context) {
+          var state = window.history.state,
+              url = UPDATE_URL? context.path: '#' + context.path;
+
           window.history.pushState({
+            prev: state,
+            view: context.view,
             path: context.path
-          }, '', context.path);
-          window.document.body.classList.remove('storeys');
+          }, '', url);
+          window.document.body.classList.remove('loading');
         });
       }
     }
@@ -155,12 +161,15 @@ define(
           method: method || 'POST',
           POST: $form.serializeArray()
         });
-        window.document.body.classList.add('storeys');
+        window.document.body.classList.add('loading');
         go(req, function(context) {
+          var url = UPDATE_URL? context.path: '#' + context.path;
+
           window.history.pushState({
+            view: context.view,
             path: context.path
-          }, '', context.path);
-          window.document.body.classList.remove('storeys');
+          }, '', url);
+          window.document.body.classList.remove('loading');
         });
       }
 
@@ -173,11 +182,13 @@ define(
 
         window.addEventListener('popstate', statepopped);
 
-        window.document.body.addEventListener('click', clicked);
+        window.document.addEventListener('click', clicked);
 
-        window.document.body.addEventListener('submit', submitted);
+        window.document.addEventListener('submit', submitted);
 
         bind.trigger('started');
+
+        window.document.body.classList.remove('loading');
 
         verbose && console.log(LOG_PREFIX + 'storeys started.');
       });
