@@ -1,6 +1,6 @@
 define(
-    ['../utils/promise'],
-    function(Q) {
+    ['require', '../utils/promise'],
+    function(require, Q) {
       var resources = {};
 
       function process_app_path(urlstring) {
