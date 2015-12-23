@@ -1,11 +1,12 @@
 define(
-  ['require', 'module', 'settings', './core/handlers/base', './utils/binds', './utils/urllib', './utils/pathlib'],
-  function(require, module, settings, handlers, binds, urllib, pathlib) {
+  ['require', 'module', 'settings', './core/handlers/base', './fragments/dispatcher', './utils/urllib', './utils/promise'],
+  function(require, module, settings, handlers, dispatcher, urllib, Q) {
     var LOG_PREFIX = '[storeys] ',
         QURL = urllib.join(urllib.parse(settings.URL_ROOT)), /* qualified root url */
         UPDATE_URL = window.location.protocol !== 'file:';
 
-    var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
+    var service,
+        pagestate,            // last-known history.state
         verbose;
 
     // -------------------------------------------
@@ -55,6 +56,16 @@ define(
           method: 'GET'
         });
         go(context, function(context) {
+          pagestate = {
+            state: {
+              view: context.view,
+              path: context.path,
+              hash: context.hash || ''
+            },
+            title: '',
+            url: UPDATE_URL? context.path: '#' + context.path
+          };
+
           window.document.body.classList.remove('loading');
         });
       } else {
@@ -62,15 +73,18 @@ define(
           method: 'GET'
         });
         go(context, function(context) {
-          var url;
-
-          if (!window.history.state) {
-            url = UPDATE_URL? context.path: '#' + context.path;
-            window.history.replaceState({
+          pagestate = {
+            state: {
               view: context.view,
-              path: context.path
-            }, '', url);
-          }
+              path: context.path,
+              hash: context.hash || ''
+            },
+            title: '',
+            url: UPDATE_URL? context.path: '#' + context.path
+          };
+
+          window.history.replaceState(pagestate.state, pagestate.title, pagestate.url);
+
           window.document.body.classList.remove('loading');
         });
       }
@@ -79,17 +93,44 @@ define(
     function go(context, cb) {
       verbose && console.log(LOG_PREFIX + 'go to path(' + context.path + ')');
 
-      handlers.get_response(context, function(response) {
-        var forward;
+      var state = pagestate? pagestate.state: {};
+      if (state.path !== context.path) {
+        dispatchview(context, function(context) {
+          if (state.hash !== context.hash) {
+            dispatchfragments(context, cb);
+          } else {
+            verbose && console.log(LOG_PREFIX + 'no hash change(' + context.path + ')');
+            cb(context);
+          }
+        });
+      } else {
+        verbose && console.log(LOG_PREFIX + 'already on path(' + context.path + ')');
+        if (state.hash !== context.hash) {
+          dispatchfragments(context, cb);
+        } else {
+          verbose && console.log(LOG_PREFIX + 'no hash change(' + context.path + ')');
+          cb(context);
+        }
+      }
+    }
 
+    function dispatchfragments(context, cb) {
+      dispatcher.dispatch(context, function(response) {
+        cb(response);
+      });
+    }
+
+    function dispatchview(context, cb) {
+      var forward;
+      handlers.get_response(context, function(response) {
         if (response !== false && typeof response !== 'undefined') {
           if ('status' in response) {
-            verbose && console.log(LOG_PREFIX + 'dispatch: '+ context.path);
+            verbose && console.log(LOG_PREFIX + 'dispatch: ' + context.path);
             if (response.status === 204) {
-              verbose && console.log(LOG_PREFIX + 'HTTP 204 - No Content (or rendered): '+ context.path);
+              verbose && console.log(LOG_PREFIX + 'HTTP 204 - No Content (or rendered): ' + context.path);
               cb(context);
             } else if (response.status === 200) {
-              verbose && console.log(LOG_PREFIX + 'HTTP 200 - Okay: '+ context.path);
+              verbose && console.log(LOG_PREFIX + 'HTTP 200 - Okay: ' + context.path);
               window.document.body.innerHTML = response.content;
               cb(context);
             } else if (response.status === 301 || response.status === 302) {
@@ -134,14 +175,17 @@ define(
 
         req = process_document_url(path, {method: 'GET'});
         go(req, function(context) {
-          var state = window.history.state,
-              url = UPDATE_URL? context.path: '#' + context.path;
-
-          window.history.pushState({
-            prev: state,
-            view: context.view,
-            path: context.path
-          }, '', url);
+          pagestate = {
+            state: {
+              prev: window.history.state,
+              view: context.view,
+              path: context.path,
+              hash: context.hash || ''
+            },
+            title: '',
+            url: UPDATE_URL? context.path: '#' + context.path
+          };
+          window.history.pushState(pagestate.state, pagestate.title, pagestate.url);
           window.document.body.classList.remove('loading');
         });
       }
@@ -163,12 +207,18 @@ define(
         });
         window.document.body.classList.add('loading');
         go(req, function(context) {
-          var url = UPDATE_URL? context.path: '#' + context.path;
+          pagestate = {
+            state: {
+              prev: window.history.state,
+              view: context.view,
+              path: context.path,
+              hash: context.hash || ''
+            },
+            title: '',
+            url: UPDATE_URL? context.path: '#' + context.path
+          };
+          window.history.pushState(pagestate.state, pagestate.title, pagestate.url);
 
-          window.history.pushState({
-            view: context.view,
-            path: context.path
-          }, '', url);
           window.document.body.classList.remove('loading');
         });
       }
@@ -177,39 +227,49 @@ define(
     }
 
     function start() {
-      handlers.on('started', function() {
-        statepopped({state: history.state});
+      return service;
+    }
 
-        window.addEventListener('popstate', statepopped);
+    function run() {
+      statepopped({state: history.state});
 
-        window.document.addEventListener('click', clicked);
-
-        window.document.addEventListener('submit', submitted);
-
-        bind.trigger('started');
-
-        window.document.body.classList.remove('loading');
-
-        verbose && console.log(LOG_PREFIX + 'storeys started.');
+      window.addEventListener('popstate', function(e) {
+        if (e.state) {  // workaround hashchange in code
+          statepopped.apply(window, arguments);
+        }
       });
+
+      window.document.addEventListener('click', clicked);
+
+      window.document.addEventListener('submit', submitted);
+
+      window.document.body.classList.remove('loading');
+
+      service.resolve();
+
+      verbose && console.log(LOG_PREFIX + 'storeys started.');
+    }
+
+    function depend() {
+      Q.all([handlers.start(), dispatcher.start()]).then(run);
     }
 
     function init(config) {
       config  = config || {};
       verbose = config.verbose || false;
+      service = new Q();
 
       if (document.readyState !== 'complete') {
-        window.addEventListener('load', start);
+        window.addEventListener('load', depend);
       } else {
-        start(config);
+        depend();
       }
     }
 
     init(module.config() || {});
 
     return {
-      on: bind.on,
-      off: bind.off
+      start: start
     };
   }
 );

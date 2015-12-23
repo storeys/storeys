@@ -1,9 +1,9 @@
 define(
-    ['require', 'module', 'settings', '../urlresolver', '../../utils/binds'],
-    function(require, module, settings, urlresolver, binds) {
+    ['require', 'module', 'settings', '../urlresolver', '../../utils/promise'],
+    function(require, module, settings, urlresolver, Q) {
       var LOG_PREFIX = '[storeys.core.handlers] ';
 
-      var bind = binds.bind(),  // to support `on`, `off`, and `trigger`.
+      var service,
           middlewares,
           urlspec,
           resolve,
@@ -128,12 +128,13 @@ define(
       //                 Lifecycle
       // -------------------------------------------
       function start() {
-        bind.trigger('started');
+        return service;
       }
 
       function init(config) {
         config  = config || {};
         verbose = config.verbose || false;
+        service = new Q();
 
         require(
             [settings.ROOT_URLCONF],
@@ -143,7 +144,7 @@ define(
               resolve = urlresolver.create(urlspec);
 
               load_middleware(function() {
-                start();
+                service.resolve();
               });
             }
         );
@@ -152,8 +153,7 @@ define(
       init(module.config() || {});
 
       return {
-        on: bind.on,
-        off: bind.off,
+        start: start,
         get_response: get_response
       }
     }
