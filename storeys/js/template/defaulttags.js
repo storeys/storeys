@@ -4,7 +4,7 @@ define(
       var prefix = require.toUrl('');
 
       function TemplateTag() {
-        this.tags = ['load', 'static', 'url'];
+        this.tags = ['load', 'static', 'url', 'csrf_token'];
 
         this.parse = function(parser, nodes, lexer) {
           var tok = parser.nextToken(),
@@ -28,6 +28,11 @@ define(
         this.url = function(context, args) {
           // template has no failure mode, just log an error
           console.error('Template tag, `url` is not supported. Value: ' + args);
+        };
+
+        this.csrf_token = function(context, args) {
+          // template has no failure mode, just log an error
+          console.error('Template tag, `csrf_token` is not supported. Value: ' + args);
         };
       }
 
