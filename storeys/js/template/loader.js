@@ -1,5 +1,5 @@
 define(
-    ['require', 'module', 'nunjucks', 'storeys/apps', './defaulttags'],
+    ['require', 'module', 'slib/nunjucks', 'storeys/apps', './defaulttags'],
     function(require, module, nunjucks, apps, defaulttags) {
       var LOG_PREFIX = '[storeys.template.loader] ';
 

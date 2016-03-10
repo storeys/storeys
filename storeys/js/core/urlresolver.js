@@ -1,5 +1,5 @@
 define(
-    ['require', 'module', '../conf/urls'],
+    ['require', 'module', 'storeys/conf/urls'],
     function(require, module, urls) {
       var LOG_PREFIX = '[storeys.core.urls] ',
           EMPTY_REG = /(?:)/;
