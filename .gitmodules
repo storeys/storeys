@@ -6,3 +6,6 @@
 	path = submodules/zousan
 	url = https://github.com/storeys/zousan.git
 	branch = master
+[submodule "submodules/nunjucks"]
+	path = submodules/nunjucks
+	url = git@github.com:beedesk/nunjucks.git
