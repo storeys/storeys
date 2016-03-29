@@ -51,6 +51,8 @@ define(
                   $page = $(config.page);
                   if (!$page.length) {
                     $('body').append(res.content);
+                  } else {
+                    $page.html(res.content);
                   }
                   $('.storeys > .current').removeClass('current');
                   $(config.page).addClass('current');
