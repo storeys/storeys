@@ -1,6 +1,6 @@
 define(
-    ['require', 'module', 'storeys/conf/urls'],
-    function(require, module, urls) {
+    ['require', 'jquery', 'settings', 'module', 'storeys/conf/urls'],
+    function(require, $, settings, module, urls) {
       var LOG_PREFIX = '[storeys.core.urls] ',
           EMPTY_REG = /(?:)/;
 
@@ -64,6 +64,45 @@ define(
       }
 
       // -------------------------------------------
+      //                 Reverse
+      // -------------------------------------------
+      function reverse(viewname, params) {
+          get_url_patterns(settings.ROOT_URLCONF, {}, function(named_patterns){
+              console.log('Named patterns:')
+              console.log(named_patterns)
+          })
+      }
+
+      function get_url_patterns(viewname, patterns, cb){
+        var included_paths = []
+
+        require(
+        [viewname], function(urlspec) {
+
+          $.each(urlspec, function(key, value){
+            if(value['next']['conf'] === "include" &&
+               value['name'] !== undefined) {
+                 throw '`url` with `include` functionality should have an `undefined` name arg';
+            } else if (value['next']['conf'] === "include") {
+              included_paths.push(value['next']['path']);
+            } else if (value['name'] != undefined) {
+              // TODO: Django's 'MultiValueDict' class needed
+              patterns[value['name']] = value['regex'].toString()
+            }
+          });
+
+          if(included_paths.length != 0){
+            $.each(included_paths, function(key, value){
+              // TODO: '$.extend' should be replaced with MultiValueDicts.update()
+              patterns = $.extend(patterns, get_url_patterns(value, patterns, cb))
+            })
+          } else {
+            cb(patterns)
+          }
+        });
+      }
+
+      // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
       function extend(a, b) {
@@ -100,7 +139,8 @@ define(
       init(module.config() || {});
 
       return {
-        create: create
+        create: create,
+        reverse: reverse,
       };
     }
 );

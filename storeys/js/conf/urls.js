@@ -35,7 +35,7 @@ define(
      * @param vieworurls
      * @returns a function
      */
-    function url(regex, vieworurls) {
+    function url(regex, vieworurls, name) {
       var compiled = re.compile(regex),
           next;
 
@@ -54,7 +54,8 @@ define(
       }
       return {
         regex: compiled,
-        next: next
+        next: next,
+        name: name
       };
     }
 
