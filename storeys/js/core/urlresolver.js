@@ -68,8 +68,8 @@ define(
       // -------------------------------------------
       function reverse(viewname, params) {
           get_url_patterns(settings.ROOT_URLCONF, {}, function(named_patterns){
-              console.log('Named patterns:')
-              console.log(named_patterns)
+              verbose && console.log(LOG_PREFIX + 'Named patterns: ' + JSON.stringify(named_patterns))
+
           })
       }
 
@@ -77,7 +77,8 @@ define(
         var included_paths = []
 
         require(
-        [viewname], function(urlspec) {
+        [viewname, 'storeys/utils/datastructures'], function(urlspec, datastructures) {
+          var patterns = new datastructures.MultiValueDict();
 
           $.each(urlspec, function(key, value){
             if(value['next']['conf'] === "include" &&
@@ -86,15 +87,14 @@ define(
             } else if (value['next']['conf'] === "include") {
               included_paths.push(value['next']['path']);
             } else if (value['name'] != undefined) {
-              // TODO: Django's 'MultiValueDict' class needed
-              patterns[value['name']] = value['regex'].toString()
+              patterns.update({[value['name']]: value['regex'].toString()})
             }
           });
 
           if(included_paths.length != 0){
             $.each(included_paths, function(key, value){
-              // TODO: '$.extend' should be replaced with MultiValueDicts.update()
-              patterns = $.extend(patterns, get_url_patterns(value, patterns, cb))
+              verbose && console.log(LOG_PREFIX + '`' + value + '` visited')
+              patterns.update(get_url_patterns(value, patterns, cb))
             })
           } else {
             cb(patterns)
