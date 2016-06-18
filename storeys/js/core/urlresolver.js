@@ -70,7 +70,7 @@ define(
       function reverse(viewname, params, cb) {
           var named_patterns,
               regex_django_params = /\([a-zA-Z0-9-_?<>\[\]\{\}\\+.*]{1,}\)/g,
-              regex_django_params_kw = /<[a-zA-Z0-9-_]{1,}>/;
+              regex_django_params_kw = /\\\?P<[a-zA-Z0-9-_]{1,}>/;
 
 
           if(params !== undefined)
@@ -135,7 +135,7 @@ define(
                             continue;
 
                           var param = res[j].match(regex_django_params_kw)[0],
-                              key = param.replace(/[<>]/g, '');
+                              key = param.replace(/[\\?P<>]/g, '');
 
                           if(!(key in params)){
                             matched = false; break;
