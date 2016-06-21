@@ -69,13 +69,12 @@ define(
 
       function reverse(viewname, params, cb) {
           var named_patterns,
-              regex_django_params = /\([a-zA-Z0-9-_?<>\[\]\{\}\\+.*]{1,}\)/g,
-              regex_django_params_kw = /\\\?P<[a-zA-Z0-9-_]{1,}>/;
-
+              regex_django_params = /\([a-zA-Z0-9-_?<>"^\(\)\|\[\]\{\}@\\+,;:.*]{1,}\)/g,
+              regex_django_params_kw = /\\\?P<[a-zA-Z0-9_]{1,}>/;
 
           if(params !== undefined)
-              if(!Array.isArray(params) && !typeof(params) === 'object')
-                  throw '`params` should be an `object` or `array`';
+              if(!Array.isArray(params) && !(typeof(params) === 'object'))
+                  throw 'reverse() `params` should be type of `Object` or `Array`, `' + typeof(params) + '` received.';
 
           get_url_patterns(settings.ROOT_URLCONF, {}, function(named_patterns){
               verbose && console.log(LOG_PREFIX + 'Named patterns: ' + JSON.stringify(named_patterns))
@@ -88,11 +87,12 @@ define(
                     continue;
                   var pattern = patterns[i],
                       res = pattern.match(regex_django_params) || [];
-                  // TODO: implement code for patterns with nested arguments
-                  if(res.length != (pattern.match(/\(/g) || []).length)
-                    throw "Url-patterns with nested arguments doesn't supports at current version"
-                  if(params === undefined){
-                    cb(pattern); return;
+
+                  if( (params === undefined ||
+                      Object.getOwnPropertyNames(params).length == 0) &&
+                      res.length == 0){
+                    cb(pattern_final_preparation(pattern)); return;
+
                   } else if (res.length == Object.keys(params).length){
                       verbose && console.log(LOG_PREFIX + 'Url-pattern arguments: ' + JSON.stringify(res))
 
@@ -100,8 +100,11 @@ define(
                         // Array (args) processing
                         verbose && console.log(LOG_PREFIX + 'Array (args) processing.')
 
-                        if((pattern.match(/</g) || []).length != 0)
+                        if((pattern.match(/\?P/g) || []).length != 0)
                           continue;
+
+                        check_for_nested_args(pattern);
+
                         for(var j in res){
                             matched = true;
 
@@ -110,7 +113,7 @@ define(
                               continue;
 
                             var param_value = params[j].toString(),
-                                param_regex = new RegExp("^"+res[j].replace(/[\(\)]/g,'')+"$"),
+                                param_regex = new RegExp("^"+res[j]+"$", 'g'),
                                 value_matched = ((param_value.match(param_regex) || []).length == 1);
 
                             verbose && console.log(LOG_PREFIX + 'RegExp: ' + param_regex + ' || Match value: '+ param_value + ' || Result: ' + value_matched)
@@ -124,7 +127,7 @@ define(
                         // JSON (kwargs) processing
                         verbose && console.log(LOG_PREFIX + 'JSON (kwargs) processing.')
 
-                        if((pattern.match(/</g) || []).length == 0)
+                        if((pattern.match(/\?P</g) || []).length == 0)
                           continue;
 
                         for(var j in res){
@@ -141,7 +144,7 @@ define(
                             matched = false; break;
                           } else {
                               var param_value = params[key].toString(),
-                                  param_regex = new RegExp("^"+res[j].replace(param,'').replace(/[\(\)]/g,'')+"$"),
+                                  param_regex = new RegExp("^" + res[j].substring(1, res[j].length-1).replace(param,'') + "$", "g"),
                                   value_matched = ((param_value.match(param_regex) || []).length == 1);
 
                               verbose && console.log(LOG_PREFIX + 'RegExp: ' + param_regex + ' || Match value: '+ param_value + ' || Result: ' + value_matched)
@@ -154,7 +157,7 @@ define(
                       }
                   }
                   if (matched){
-                      pattern = pattern.replace(/[\^\\\$]/g,'').replace('//','/');
+                      pattern = pattern_final_preparation(pattern);
                       cb(pattern); return;
                   }
               }
@@ -176,19 +179,23 @@ define(
             } else if (value['next']['conf'] === "include") {
               included_paths.push(value['next']['path']);
             } else if (value['name'] != undefined) {
+            //   console.log(value['name'] + " : " + value['regex'].toString() + "added")
               patterns.update({[value['name']]: value['regex'].toString()})
             }
           });
-
+          
           if(included_paths.length != 0){
             $.each(included_paths, function(key, value){
               verbose && console.log(LOG_PREFIX + '`' + value + '` visited')
-              patterns.update(
-                get_url_patterns(
-                    get_path_to_application_routes(value.split('/')[0]),
-                    patterns,
-                    cb
-                )
+              get_url_patterns(
+                  get_path_to_application_routes(value.split('/')[0]),
+                  new datastructures.MultiValueDict(),
+                  function(new_patterns){
+                      patterns.update(
+                        new_patterns
+                      )
+                      cb(patterns)
+                  }
               )
             })
           } else {
@@ -197,9 +204,6 @@ define(
         });
       }
 
-      function get_path_to_application_routes(appname){
-          return appname+'/static/'+appname+'/urls'
-      }
       // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
@@ -208,6 +212,20 @@ define(
           a[key] = b[key];
         });
         return a;
+      }
+
+      // TODO: implement code for patterns with nested arguments
+      function check_for_nested_args(pattern){
+          if((pattern.match(/\?P/g) || []).length != 0)
+            throw "Url-patterns with nested arguments doesn't supports at current version"
+      }
+
+      function pattern_final_preparation(pattern){
+          return pattern.replace(/[\^\\\$]/g,'').replace('//','/');
+      }
+
+      function get_path_to_application_routes(appname){
+          return appname+'/static/'+appname+'/urls'
       }
 
       // ===========================================

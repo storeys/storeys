@@ -47,10 +47,13 @@ define(
         */
         MultiValueDict.prototype.update = function(obj){
             for (var prop in obj) {
-                if ( prop in this && this[prop].length != 0 ){
-                    this[prop].concat_unique(Array.isArray(obj[prop]) ? obj[prop] : [obj[prop]])
-                } else {
-                    this.set(prop, obj[prop]);
+                // TODO: fix this behavior
+                if(prop !== 'set' && prop !== 'get' && prop !== 'getlist' && prop !== 'update'){
+                    if ( prop in this && this[prop].length != 0 ){
+                        this[prop].concat_unique(Array.isArray(obj[prop]) ? obj[prop] : [obj[prop]])
+                    } else {
+                        this.set(prop, obj[prop]);
+                    }
                 }
             }
         }
