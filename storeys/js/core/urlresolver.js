@@ -176,8 +176,8 @@ define(
         var included_paths = {}
 
         require(
-        [viewname, 'storeys/utils/datastructures'], function(urlspec, datastructures) {
-          var patterns = new datastructures.MultiValueDict();
+        [viewname], function(urlspec) {
+          var patterns = {};
 
           $.each(urlspec, function(key, value){
             if(value['next']['conf'] === "include" &&
@@ -193,7 +193,7 @@ define(
               //TODO:  Fix JS behaviour: str.replace('\\/?','')
               path = base_url + value['regex'].toString().replace('\\/?','')
 
-              patterns.update({[value['name']]: path})
+              patterns = update(patterns, {[value['name']]: path})
             }
           });
 
@@ -205,9 +205,10 @@ define(
               get_url_patterns(
                   get_path_to_application_routes(included_path.split('/')[0]),
                   re,
-                  new datastructures.MultiValueDict(),
+                  {},
                   function(new_patterns){
-                      patterns.update(
+                      patterns = update(
+                        patterns,
                         new_patterns
                       )
                       cb(patterns)
@@ -229,6 +230,43 @@ define(
         });
         return a;
       }
+
+      /**
+      * Concatenate two objects
+      * If key exist in both objects, values will be concatenated with uniquness
+      */
+      function update(obj1, obj2){
+          for (var prop in obj2) {
+
+              if (!obj2.hasOwnProperty(prop)) continue;
+
+              if ( prop in obj1 && obj1[prop].length != 0 ){
+                  obj1[prop] = concat_unique(obj1[prop], Array.isArray(obj2[prop]) ? obj2[prop] : [obj2[prop]])
+              } else {
+                  obj1[prop] = (Array.isArray(obj2[prop]) ? obj2[prop] : [obj2[prop]]) ;
+              }
+          }
+          return obj1;
+      }
+
+      /**
+      * Concat two array using unique values
+      */
+      function concat_unique(arr1, arr2) {
+          for(var i=0; i<arr2.length; ++i) {
+              var exists = false;
+              for(var j=0; j<arr1.length; ++j) {
+                  if(arr2[i] === arr1[j]){
+                      exists = true;
+                      break;
+                  }
+              }
+
+              if (!exists)
+                  arr1.push(arr2[i])
+          }
+          return arr1;
+      };
 
       // TODO: implement code for patterns with nested arguments
       function throw_if_nested_args(pattern){
