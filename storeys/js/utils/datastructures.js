@@ -23,19 +23,19 @@ define(
          *single name-value pairs.
          */
         function MultiValueDict(obj) {
-            this.set = function(key, value){
-                this[key] = (Array.isArray(value) ? value : [value]);
-            }
-
-            /**
-            * Returns the last data value for the passed key. If key doesn't exist
-            * or value is an empty list, then default is returned.
-            */
-            this.get = function(key, default_value){
-                return (this[key] != undefined ? this[key][this[key].length-1] : default_value)
-            }
-
             for (var prop in obj) this.set(prop, obj[prop]);
+        }
+
+        MultiValueDict.prototype.set = function(key, value){
+            this[key] = (Array.isArray(value) ? value : [value]);
+        }
+
+        /**
+        * Returns the last data value for the passed key. If key doesn't exist
+        * or value is an empty list, then default is returned.
+        */
+        MultiValueDict.prototype.get = function(key, default_value){
+            return (this[key] != undefined ? this[key][this[key].length-1] : default_value)
         }
 
         MultiValueDict.prototype.getlist = function(key, default_value){
@@ -47,13 +47,13 @@ define(
         */
         MultiValueDict.prototype.update = function(obj){
             for (var prop in obj) {
-                // TODO: fix this behavior
-                if(prop !== 'set' && prop !== 'get' && prop !== 'getlist' && prop !== 'update'){
-                    if ( prop in this && this[prop].length != 0 ){
-                        this[prop].concat_unique(Array.isArray(obj[prop]) ? obj[prop] : [obj[prop]])
-                    } else {
-                        this.set(prop, obj[prop]);
-                    }
+
+                if (!obj.hasOwnProperty(prop)) continue;
+
+                if ( prop in this && this[prop].length != 0 ){
+                    this[prop].concat_unique(Array.isArray(obj[prop]) ? obj[prop] : [obj[prop]])
+                } else {
+                    this.set(prop, obj[prop]);
                 }
             }
         }

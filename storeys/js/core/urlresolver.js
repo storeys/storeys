@@ -1,8 +1,9 @@
 define(
-    ['require', 'jquery', 'settings', 'module', 'storeys/conf/urls'],
-    function(require, $, settings, module, urls) {
+    ['require', 'jquery', 'settings', 'module', 'storeys/conf/urls', 'storeys/utils/http'],
+    function(require, $, settings, module, urls, http) {
       var LOG_PREFIX = '[storeys.core.urls] ',
-          EMPTY_REG = /(?:)/;
+          EMPTY_REG = /(?:)/,
+          encodeRFC3986URIComponent = http.encodeRFC3986URIComponent;
 
       var verbose;
 
@@ -76,15 +77,15 @@ define(
               if(!Array.isArray(params) && !(typeof(params) === 'object'))
                   throw 'reverse() `params` should be type of `Object` or `Array`, `' + typeof(params) + '` received.';
 
-          get_url_patterns(settings.ROOT_URLCONF, {}, function(named_patterns){
+          get_url_patterns(settings.ROOT_URLCONF, '/', {}, function(named_patterns){
               verbose && console.log(LOG_PREFIX + 'Named patterns: ' + JSON.stringify(named_patterns))
               patterns = named_patterns[viewname]
 
               for(var i in patterns){
                   var matched = false;
-                  // TODO: fix this bug
-                  if(i == "concat_unique")
-                    continue;
+
+                  if (!patterns.hasOwnProperty(i)) continue;
+
                   var pattern = patterns[i],
                       res = pattern.match(regex_django_params) || [];
 
@@ -103,14 +104,13 @@ define(
                         if((pattern.match(/\?P/g) || []).length != 0)
                           continue;
 
-                        check_for_nested_args(pattern);
+                        // TODO: Very rare thing. Possibly, should be realized in next versions.
+                        throw_if_nested_args(pattern);
 
                         for(var j in res){
                             matched = true;
 
-                            // TODO: fix this bug
-                            if(j == "concat_unique")
-                              continue;
+                            if (!res.hasOwnProperty(j)) continue;
 
                             var param_value = params[j].toString(),
                                 param_regex = new RegExp("^"+res[j]+"$", 'g'),
@@ -120,6 +120,8 @@ define(
                             if (!value_matched){
                               matched = false; break;
                             }
+
+                            param_value = encodeRFC3986URIComponent(param_value);
                             pattern = pattern.replace(res[j], param_value);
                         }
 
@@ -133,9 +135,7 @@ define(
                         for(var j in res){
                           matched = true;
 
-                          // TODO: fix this bug
-                          if(j == "concat_unique")
-                            continue;
+                          if (!res.hasOwnProperty(j)) continue;
 
                           var param = res[j].match(regex_django_params_kw)[0],
                               key = param.replace(/[\\?P<>]/g, '');
@@ -151,6 +151,8 @@ define(
                               if (!value_matched){
                                 matched = false; break;
                               }
+
+                              param_value = encodeRFC3986URIComponent(param_value)
                               pattern = pattern.replace(res[j], param_value);
                           }
                         }
@@ -165,8 +167,13 @@ define(
           })
       }
 
-      function get_url_patterns(viewname, patterns, cb){
-        var included_paths = []
+      /**
+      * Function search for url-patterns
+      * from all available applications
+      * and returns a json of them
+      */
+      function get_url_patterns(viewname, base_url, patterns, cb){
+        var included_paths = {}
 
         require(
         [viewname, 'storeys/utils/datastructures'], function(urlspec, datastructures) {
@@ -177,26 +184,35 @@ define(
                value['name'] !== undefined) {
                  throw '`url` with `include` functionality should have an `undefined` name arg';
             } else if (value['next']['conf'] === "include") {
-              included_paths.push(value['next']['path']);
+              included_paths[value.regex.toString()] = value['next']['path'];
             } else if (value['name'] != undefined) {
-            //   console.log(value['name'] + " : " + value['regex'].toString() + "added")
-              patterns.update({[value['name']]: value['regex'].toString()})
+
+              // Removing last '/' from base_url
+              base_url = (base_url[base_url.length - 1] === '/') ? base_url.substring(0, base_url.length - 1) : base_url
+
+              //TODO:  Fix JS behaviour: str.replace('\\/?','')
+              path = base_url + value['regex'].toString().replace('\\/?','')
+
+              patterns.update({[value['name']]: path})
             }
           });
-          
-          if(included_paths.length != 0){
-            $.each(included_paths, function(key, value){
-              verbose && console.log(LOG_PREFIX + '`' + value + '` visited')
+
+          if(Object.keys(included_paths).length != 0){
+            $.each(included_paths, function(re, included_path){
+
+              verbose && console.log(LOG_PREFIX + '`' + included_path + '` visited')
+
               get_url_patterns(
-                  get_path_to_application_routes(value.split('/')[0]),
+                  get_path_to_application_routes(included_path.split('/')[0]),
+                  re,
                   new datastructures.MultiValueDict(),
                   function(new_patterns){
                       patterns.update(
                         new_patterns
                       )
                       cb(patterns)
-                  }
-              )
+              });
+
             })
           } else {
             cb(patterns)
@@ -215,13 +231,15 @@ define(
       }
 
       // TODO: implement code for patterns with nested arguments
-      function check_for_nested_args(pattern){
+      function throw_if_nested_args(pattern){
           if((pattern.match(/\?P/g) || []).length != 0)
             throw "Url-patterns with nested arguments doesn't supports at current version"
       }
 
+      // Wecan't use .match() because JS doesn't supports P<name> in RegExp
+      // In this function we are replacing all special 'regex' characters and working with last '/'
       function pattern_final_preparation(pattern){
-          return pattern.replace(/[\^\\\$]/g,'').replace('//','/');
+          return pattern.replace(/([\^\\\\]|\$\/)/g,'').replace('//','/');
       }
 
       function get_path_to_application_routes(appname){
