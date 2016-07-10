@@ -44,8 +44,7 @@ define(
             var arg_length = arguments.length,
                 cb = arguments[arg_length-1],
                 url_name = arguments[1],
-                args = [],
-                named_arguments = ((typeof arguments[arg_length-2]) == 'object') ? arguments[arg_length-2] : false
+                named_arguments = ((typeof arguments[arg_length-2]) == 'object') ? arguments[arg_length-2] : false;
 
             if(typeof url_name != 'string')
                 throw '{% url `url-name` %} Url-name should be a string value';
@@ -56,10 +55,13 @@ define(
             if(named_arguments){
                 args = named_arguments;
                 delete args.__keywords;
-            } else {
+            } else if (arg_length>3) {
+                args = [];
                 for(i=2; i<arg_length-1; i++){
                     args.push(arguments[i]);
                 }
+            } else {
+                args = {};
             }
 
             urlresolver.reverse(url_name, args, function(url){
