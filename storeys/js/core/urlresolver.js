@@ -212,8 +212,8 @@ define(
                         new_patterns
                       )
                       cb(patterns)
-              });
-
+                   }
+               );
             })
           } else {
             cb(patterns)
