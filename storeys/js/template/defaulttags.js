@@ -47,9 +47,9 @@ define(
                 named_arguments = ((typeof arguments[arg_length-2]) == 'object') ? arguments[arg_length-2] : false;
 
             if(typeof url_name != 'string')
-                throw '{% url `url-name` %} Url-name should be a string value';
+                throw 'Url-name in `url` templatetag should be a string value';
             if(arg_length > 4 && named_arguments)
-                throw 'Templatetag `url` doesn\'t supports united arguments. Please user only arguments or only named arguments.';
+                throw 'Please use only arguments or only named arguments in `url` templatetag.';
 
 
             if(named_arguments){
