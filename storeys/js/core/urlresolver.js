@@ -99,6 +99,7 @@ define(
                           continue;
 
                         // TODO: Very rare thing. Possibly, should be realized in next versions.
+                        // It can be borrowed from `xregexp`
                         throw_if_nested_args(pattern.path);
 
                         for(var j in pattern.regex.tokens){

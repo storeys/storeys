@@ -2,9 +2,9 @@
  * A purpose-built and far-from-perfect implementation of extended RegEx that
  * enables Python-style named capture group.
  */
-define([], function() {
+define(['xregexp'], function(XRegExp) {
   var PARAM_PATTERN = /\([\w-?<>"^\(\)\|\[\]\{\}@\\+,;:.*]{1,}\)/g,
-      NAMED_PARAM_PATTERN = /\\\?P<[\w\$]{1,}>/;
+      NAMED_PARAM_PATTERN = /\?P<[\w\$]{1,}>/;
 
   /**
    * Matches the specific (extended) regex against a string.
@@ -17,13 +17,20 @@ define([], function() {
 
   function exec(obj, regex, string) {
     var matches = string.match(regex) || false,
+        captureNames = XRegExp(obj.source).xregexp.captureNames;
         remainder  = matches? string.replace(regex, ''): '',
         params = {},
         result = false;
-
+        
     if (matches) {
         matches.slice(1).some(function (match, n) {
-        params[n] = match;
+        if(captureNames){
+            if(captureNames[n]){
+                params[captureNames[n]] = match;
+            }
+        } else {
+            params[n] = match;
+        }
       });
 
       result = {remainder: remainder, params: params};
@@ -54,7 +61,7 @@ define([], function() {
       tokens.some(function(token, n) {
         match_key_regex = token.match(NAMED_PARAM_PATTERN);
         if (match_key_regex) {
-          kwargs.push(match_key_regex[0].substring(4, match_key_regex[0].length-1));
+          kwargs.push(match_key_regex[0].substring(3, match_key_regex[0].length-1));
           regexps.push(token.replace(match_key_regex[0], ''));
           source = source.replace(match_key_regex[0], '');
         }
@@ -81,6 +88,7 @@ define([], function() {
       },
       kwargs: kwargs,
       tokens: regexps,
+      source: regexOrStr
     };
   }
 
