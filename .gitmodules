@@ -11,4 +11,4 @@
 	url = https://github.com/storeys/nunjucks.git
 [submodule "submodules/xregexp"]
 	path = submodules/xregexp
-	url = https://github.com/slevithan/xregexp.git
+	url = https://github.com/storeys/xregexp.git
