@@ -1,6 +1,6 @@
 define(
-    ['require', 'module', 'storeys/template/response', 'storeys/resources/css', 'storeys/utils/promise'],
-    function(require, module, response, css, Q) {
+    ['require', 'module', 'jquery', 'storeys/template/response', 'storeys/resources/css', 'storeys/utils/promise'],
+    function(require, module, $, response, css, Q) {
       var EMPTY_PROMISE = Q.resolve();
       var TemplateResponse = response.TemplateResponse;
 
@@ -51,6 +51,8 @@ define(
                   $page = $(config.page);
                   if (!$page.length) {
                     $('body').append(res.content);
+                  } else {
+                    $page.html(res.content);
                   }
                   $('.storeys > .current').removeClass('current');
                   $(config.page).addClass('current');

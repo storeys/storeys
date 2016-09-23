@@ -6,3 +6,9 @@
 	path = submodules/zousan
 	url = https://github.com/storeys/zousan.git
 	branch = master
+[submodule "submodules/nunjucks"]
+	path = submodules/nunjucks
+	url = https://github.com/storeys/nunjucks.git
+[submodule "submodules/xregexp"]
+	path = submodules/xregexp
+	url = https://github.com/storeys/xregexp.git

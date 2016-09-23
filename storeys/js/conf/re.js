@@ -2,9 +2,9 @@
  * A purpose-built and far-from-perfect implementation of extended RegEx that
  * enables Python-style named capture group.
  */
-define([], function() {
-  var PARAM_PATTERN = /\(.*?\)/g,
-      NAMED_PARAM_PATTERN = /\(\?P<([a-zA-Z_\$][\w\$]*)>(.*?)\)/;
+define(['xregexp'], function(XRegExp) {
+  var PARAM_PATTERN = /\([\w-?<>"^\(\)\|\[\]\{\}@\\+,;:.*]{1,}\)/g,
+      NAMED_PARAM_PATTERN = /\?P<[\w\$]{1,}>/;
 
   /**
    * Matches the specific (extended) regex against a string.
@@ -14,18 +14,22 @@ define([], function() {
    * @param string to match against
    * @returns {remainder: value, params: values} if matches, false otherwise
    */
-  function exec(regex, names, string) {
+
+  function exec(obj, regex, string) {
     var matches = string.match(regex) || false,
+        captureNames = XRegExp(obj.source).xregexp.captureNames;
         remainder  = matches? string.replace(regex, ''): '',
         params = {},
         result = false;
-
+        
     if (matches) {
-      // fill the params, if any
-      matches.slice(1).some(function (match, n) {
-        params[n] = match;
-        if (n in names) {
-          params[names[n]] = match;
+        matches.slice(1).some(function (match, n) {
+        if(captureNames){
+            if(captureNames[n]){
+                params[captureNames[n]] = match;
+            }
+        } else {
+            params[n] = match;
         }
       });
 
@@ -47,7 +51,8 @@ define([], function() {
   // ===========================================
   function compile(regexOrStr) {
     var regex = regexOrStr,
-        names = [],
+        kwargs = [],
+        regexps = [],
         source, tokens, match_key_regex;
 
     if (regexOrStr instanceof RegExp === false) {
@@ -56,10 +61,14 @@ define([], function() {
       tokens.some(function(token, n) {
         match_key_regex = token.match(NAMED_PARAM_PATTERN);
         if (match_key_regex) {
-          names.push(match_key_regex[1]);
-          source = source.replace(token, '(' + match_key_regex[2] + ')');
+          kwargs.push(match_key_regex[0].substring(3, match_key_regex[0].length-1));
+          regexps.push(token.replace(match_key_regex[0], ''));
+          source = source.replace(match_key_regex[0], '');
         }
       });
+      if(!match_key_regex){
+          regexps = tokens;
+      }
       regex = new RegExp(source);
     }
     if (regex.source === '' || endsWith(regex.source, '/$') || endsWith(regex.source, '/?$')) {
@@ -69,14 +78,17 @@ define([], function() {
     }
     return {
       match: function(string) {
-        return exec(regex, [], string);
+        return exec(this, regex, string);
       },
       toString: function() {
         return regex.toString();
       },
       toJSON: function() {
         return regex.toString();
-      }
+      },
+      kwargs: kwargs,
+      tokens: regexps,
+      source: regexOrStr
     };
   }
 

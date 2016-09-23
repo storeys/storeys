@@ -1,5 +1,5 @@
 define(
-    ['require', 'module', 'settings', '../urlresolver', '../../utils/promise'],
+    ['require', 'module', 'settings', 'storeys/core/urlresolver', 'storeys/utils/promise'],
     function(require, module, settings, urlresolver, Q) {
       var LOG_PREFIX = '[storeys.core.handlers] ';
 
