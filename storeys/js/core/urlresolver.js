@@ -26,9 +26,8 @@ define(
             }), cb);
           } else if (node.next.conf === 'include') {
             verbose && console.log(LOG_PREFIX + 'segment matched -- include(lazily initiated): ' + node.next.path);
-            var path_to_routes = get_path_to_application_routes(node.next.path.split('/')[0]);
-            require([path_to_routes], function(urls) {
-              verbose && console.log(LOG_PREFIX + 'include(lazily initiated) loaded: ' + path_to_routes);
+            require([node.next.path], function(urls) {
+              verbose && console.log(LOG_PREFIX + 'include(lazily initiated) loaded: ' + node.next.path);
               loop(urls.map(function(url) {
                 return {
                   urlpath: resolved.remainder,
@@ -194,7 +193,7 @@ define(
               verbose && console.log(LOG_PREFIX + '`' + included_path + '` visited')
 
               get_url_patterns(
-                  get_path_to_application_routes(included_path.split('/')[0]),
+                  included_path,
                   re,
                   {},
                   function(new_patterns){
@@ -269,10 +268,6 @@ define(
       // In this function we are replacing all special 'regex' characters and working with last '/'
       function pattern_final_preparation(pattern){
           return pattern.replace(/([\^\\\\]|\$\/)/g,'').replace('//','/');
-      }
-
-      function get_path_to_application_routes(appname){
-          return appname+'/static/'+appname+'/urls'
       }
 
       // ===========================================
