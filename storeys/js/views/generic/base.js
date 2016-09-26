@@ -106,8 +106,8 @@ define(
       function TemplateView(config) {
         this.config = config;
       }
-      TemplateView.prototype = new View();
-      TemplateView.prototype.constructor = View;
+      TemplateView.prototype = View.prototype;
+      TemplateView.prototype.constructor = TemplateView;
       TemplateView.prototype.render = function(req, params) {
         var config = this.config,
             templatepath = config.templatepath,

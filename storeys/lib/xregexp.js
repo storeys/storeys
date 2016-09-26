@@ -1,1 +1,1 @@
-../../submodules/xregexp/src/xregexp.js
+../../submodules/xregexp/xregexp-all.js

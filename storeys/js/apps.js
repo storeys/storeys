@@ -6,6 +6,9 @@ define(
             configs = [],
             name, i, len;
 
+        if (typeof names === 'string' || names instanceof String) {
+          names = [names];
+        }
         for (i=0, len=names.length; i<len; i++) {
           name = names[i];
           configs.push({name: name, path: name});

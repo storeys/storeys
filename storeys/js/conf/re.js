@@ -2,7 +2,7 @@
  * A purpose-built and far-from-perfect implementation of extended RegEx that
  * enables Python-style named capture group.
  */
-define(['xregexp'], function(XRegExp) {
+define(['slib/xregexp'], function(XRegExp) {
   var PARAM_PATTERN = /\([\w-?<>"^\(\)\|\[\]\{\}@\\+,;:.*]{1,}\)/g,
       NAMED_PARAM_PATTERN = /\?P<[\w\$]{1,}>/;
 
@@ -17,7 +17,7 @@ define(['xregexp'], function(XRegExp) {
 
   function exec(obj, regex, string) {
     var matches = string.match(regex) || false,
-        captureNames = XRegExp(obj.source).xregexp.captureNames;
+        captureNames = XRegExp(obj.source).xregexp.captureNames,
         remainder  = matches? string.replace(regex, ''): '',
         params = {},
         result = false;
