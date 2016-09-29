@@ -1,6 +1,6 @@
 define(
-    ['require', 'module', 'settings', 'storeys/core/urlresolver', 'storeys/utils/promise'],
-    function(require, module, settings, urlresolver, Q) {
+    ['require', 'module', 'storeys/conf/settings', 'storeys/core/urlresolver', 'storeys/utils/promise', 'storeys/utils/objectlib'],
+    function(require, module, settings, urlresolver, Q, objectlib) {
       var LOG_PREFIX = '[storeys.core.handlers] ';
 
       var service,
@@ -27,13 +27,6 @@ define(
       // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
-      function extend(a, b) {
-        Object.keys(b).some(function(key) {
-          a[key] = b[key];
-        });
-        return a;
-      }
-
       function get_classes(classnames, cb) {
         var classpaths,
             classes;
@@ -104,7 +97,7 @@ define(
             var path = req.path.indexOf('/') === 0? req.path.substring(1): req.path;
             resolve(path, function(params, view) {
               if (params !== false) {
-                request = extend({}, req);
+                request = objectlib.extend({}, req);
                 if ('dispatch' in view) {
                   view.dispatch(request, params).then(function(res) {
                     res.view = view;

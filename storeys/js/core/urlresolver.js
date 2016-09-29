@@ -1,6 +1,6 @@
 define(
-    ['require', 'jquery', 'settings', 'module', 'storeys/conf/urls', 'storeys/utils/http'],
-    function(require, $, settings, module, urls, http) {
+    ['require', 'module', 'jquery', 'storeys/conf/settings', 'storeys/conf/urls', 'storeys/utils/objectlib', 'storeys/utils/http'],
+    function(require, module, $, settings, urls, objectlib, http) {
       var LOG_PREFIX = '[storeys.core.urls] ',
           EMPTY_REG = /(?:)/,
           encodeRFC3986URIComponent = http.encodeRFC3986URIComponent;
@@ -32,7 +32,7 @@ define(
                 return {
                   urlpath: resolved.remainder,
                   node: url,
-                  params: extend(params, resolved.params)
+                  params: objectlib.extend(params, resolved.params)
                 };
               }), cb);
             });
@@ -67,15 +67,13 @@ define(
       // -------------------------------------------
 
       function reverse(viewname, params, cb) {
-          var named_patterns;
-
           if(params !== undefined)
               if(!Array.isArray(params) && !(typeof(params) === 'object'))
                   throw 'reverse() `params` should be type of `Object` or `Array`, `' + typeof(params) + '` received.';
 
           get_url_patterns(settings.ROOT_URLCONF, '/', {}, function(named_patterns){
             //   verbose && console.log(LOG_PREFIX + 'Named patterns: ' + JSON.stringify(named_patterns))
-              patterns = named_patterns[viewname]
+              var patterns = named_patterns[viewname]
               for(var i in patterns){
                   if (!patterns.hasOwnProperty(i)) continue;
 
@@ -180,9 +178,10 @@ define(
               // Removing last '/' from base_url
               base_url = (base_url[base_url.length - 1] === '/') ? base_url.substring(0, base_url.length - 1) : base_url
 
-              //TODO:  Fix JS behaviour: str.replace('\\/?','')
+              // @TODO:  Fix JS behaviour: str.replace('\\/?','')
               value['path'] = base_url + value['regex'].toString().replace('\\/?','')
 
+              // @TODO: Fix this:
               patterns = update(patterns, {[value['name']]: value})
             }
           });
@@ -214,13 +213,6 @@ define(
       // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
-      function extend(a, b) {
-        Object.keys(b).some(function(key) {
-          a[key] = b[key];
-        });
-        return a;
-      }
-
       /**
       * Concatenate two objects
       * If key exist in both objects, values will be concatenated with uniquness

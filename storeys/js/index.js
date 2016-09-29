@@ -1,22 +1,5 @@
-require.config({
-  packages: [
-    {
-      name: 'slib',
-      location: 'storeys/lib',
-    }
-  ],
-  shim: {
-    'slib/nunjucks': {
-      exports: 'nunjucks'
-    },
-    'slib/xregexp': {
-      exports: 'XRegExp'
-    }
-  }
-});
-
 define(
-  ['require', 'module', 'settings', './core/handlers/base', './fragments/dispatcher', './utils/urllib', './utils/promise'],
+  ['require', 'module', './conf/settings', './core/handlers/base', './fragments/dispatcher', './utils/urllib', './utils/promise'],
   function(require, module, settings, handlers, dispatcher, urllib, Q) {
     var LOG_PREFIX = '[storeys] ',
         QURL = urllib.join(urllib.parse(settings.URL_ROOT)), /* qualified root url */

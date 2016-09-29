@@ -1,5 +1,5 @@
 define(
-    ['require', 'module', 'settings', 'storeys/core/urlresolver', 'storeys/utils/promise'],
+    ['require', 'module', 'storeys/conf/settings', 'storeys/core/urlresolver', 'storeys/utils/promise'],
     function(require, module, settings, urlresolver, Q) {
       var LOG_PREFIX = '[storeys.fragments.dispatcher] ';
 

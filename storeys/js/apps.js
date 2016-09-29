@@ -1,5 +1,5 @@
 define(
-    ['settings'],
+    ['storeys/conf/settings'],
     function(settings) {
       function get_app_configs() {
         var names = settings.PROJECT_APPS || [],

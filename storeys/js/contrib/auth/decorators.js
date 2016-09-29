@@ -1,5 +1,5 @@
 define(
-    ['require', 'module', 'settings'],
+    ['require', 'module', 'storeys/conf/settings'],
     function(require, module, settings) {
       var REDIRECT_FIELD_NAME = 'next';
 

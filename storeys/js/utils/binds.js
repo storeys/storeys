@@ -1,6 +1,6 @@
 define(
-    [],
-    function() {
+    ['./objectlib'],
+    function(objectlib) {
       function bind(instance) {
         var binder = instance || {};
         var handlers = [];
@@ -9,7 +9,7 @@ define(
           var filter, handler;
 
           filter = typeof(type) === "string" ? {type: type} : type;
-          handler = extend({fn: fn}, filter);
+          handler = objectlib.extend({fn: fn}, filter);
           handlers.push(handler);
 
           return binder;
@@ -19,7 +19,7 @@ define(
           var filter;
 
           filter = typeof(type) === "string" ? {type: type} : type;
-          filter = fn === undefined ? filter : extend({fn: fn}, filter);
+          filter = fn === undefined ? filter : objectlib.extend({fn: fn}, filter);
           remove(handlers, filter);
 
           return binder;
@@ -61,13 +61,6 @@ define(
       // -------------------------------------------
       //                 Utilities
       // -------------------------------------------
-      function extend(a, b) {
-        Object.keys(b).some(function(key) {
-          a[key] = b[key];
-        });
-        return a;
-      }
-
       function match(entry, filters) {
         var result = false,
             matchAll, matchSome,

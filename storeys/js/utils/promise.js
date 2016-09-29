@@ -1,8 +1,4 @@
-define(
-    ['../../../storeys/lib/zousan'],
-    function(zousan) {
-      // note: AMD lines in Zousan code is commented out
-      // Export the global variable of Zousan
-      return Zousan;
-    }
-);
+define(['slib/zousan'], function(zousan) {
+  // simple renaming
+  return zousan;
+});

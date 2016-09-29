@@ -1,16 +1,6 @@
 define(
-    ['./loader', 'storeys/utils/promise'],
-    function(loader, Q) {
-      // -------------------------------------------
-      //                 Utilities
-      // -------------------------------------------
-      function extend(a, b) {
-        Object.keys(b).some(function(key) {
-          a[key] = b[key];
-        });
-        return a;
-      }
-
+    ['./loader', 'storeys/utils/promise', 'storeys/utils/objectlib'],
+    function(loader, Q, objectlib) {
       // -------------------------------------------
       //                  Private
       // -------------------------------------------
@@ -37,7 +27,7 @@ define(
       }
 
       function get_context(req, params) {
-        return extend({request: req}, params);
+        return objectlib.extend({request: req}, params);
       }
 
       // ===========================================
